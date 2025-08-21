@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: EventBridge schedule to run Lambda (acrJiraTokenExipryCheckLambda) every 3 minutes
+
+Parameters:
+  AutomationRoleArn:
+    Type: String
+    Description: ARN of the IAM Role (AcrJiraTokenExpiryAccessAutomationRole) created separately
+
+Resources:
+  LambdaSchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: AcrJiraLambdaScheduleEvery3Minutes
+      FlexibleTimeWindow:
+        Mode: OFF
+      ScheduleExpression: rate(3 minutes)
+      Target:
+        Arn: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/acrJiraTokenExipryCheckLambda
+        RoleArn: !Ref AutomationRoleArn
+
+Outputs:
+  ScheduleName:
+    Description: Name of the EventBridge schedule
+    Value: !Ref LambdaSchedule
+  LambdaFunctionArn:
+    Description: ARN of the Lambda being triggered
+    Value: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/acrJiraTokenExipryCheckLambda
