@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: IAM Role with full permissions for IAM, EventBridge, Lambda, SNS, Logs, S3, CloudWatch, and Secrets Manager
+
+Resources:
+  FullAccessAutomationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AcrJiraTokenExpiryAccessAutomationRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - events.amazonaws.com
+                - scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: FullAccessIAMEventBridgeLambdaSNSLogsS3Secrets
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:*
+                  - events:*
+                  - scheduler:*
+                  - lambda:*
+                  - sns:*
+                  - logs:*
+                  - s3:*
+                  - secretsmanager:*
+                  - cloudwatch:*
+                Resource: "*"
+
+Outputs:
+  RoleName:
+    Description: Name of the IAM Role created
+    Value: !Ref FullAccessAutomationRole
+  RoleArn:
+    Description: ARN of the IAM Role created
+    Value: !GetAtt FullAccessAutomationRole.Arn
