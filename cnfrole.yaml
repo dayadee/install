@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: IAM Role with full permissions for IAM, EventBridge, Lambda, SNS, CloudWatch Logs, and S3
+Description: IAM Role with full permissions for IAM, EventBridge, Lambda, SNS, CloudWatch Logs, S3, and Secrets Manager
 
 Resources:
   MyIAMRole:
@@ -14,10 +14,11 @@ Resources:
               Service:
                 - lambda.amazonaws.com
                 - events.amazonaws.com
+                - scheduler.amazonaws.com
             Action: sts:AssumeRole
       Path: "/"
       Policies:
-        - PolicyName: FullAccessIAMEventBridgeLambdaSNSLogsS3
+        - PolicyName: FullAccessIAMEventBridgeLambdaSNSLogsS3Secrets
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -30,6 +31,7 @@ Resources:
                   - sns:*
                   - logs:*
                   - s3:*
+                  - secretsmanager:*     # ✅ added Secrets Manager
                 Resource: "*"
 
 Outputs:
