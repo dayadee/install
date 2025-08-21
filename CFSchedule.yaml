@@ -15,14 +15,13 @@ Resources:
         RoleArn: arn:aws:iam::833376745199:role/AcrJiraTokenExpiryAccessAutomationRole
         # 👉 Hardcoded IAM role ARN
 
-  # Optional: Attach policy to ensure the provided Role can invoke the Lambda
+  # Policy to allow EventBridge Scheduler role to invoke Lambda
   SchedulerInvokeLambdaPolicy:
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: AllowSchedulerInvokeDAYALAMBDA
+      PolicyName: AllowSchedulerInvokeAcrJiraLambda
       Roles:
-        - !Select [1, !Split ["/", "arn:aws:iam::833376745199:role/AcrJiraTokenExpiryAccessAutomationRole"]]  
-        # 👉 Extracts the RoleName from ARN automatically
+        - AcrJiraTokenExpiryAccessAutomationRole   # 👉 Role name only, not ARN
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
