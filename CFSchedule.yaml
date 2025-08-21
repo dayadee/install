@@ -1,34 +1,39 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: EventBridge schedule to run Lambda every 3 minutes
-
-Parameters:
-  LambdaFunctionName:
-    Type: String
-    Description: Name of the existing Lambda function to trigger
-    # 👉 Example: "MyETLLambda" 
-    # (This must be the actual name of your Lambda function, NOT the ARN)
-
-  ScheduleRoleArn:
-    Type: String
-    Description: ARN of the existing IAM role that EventBridge Scheduler will assume
-    # 👉 Example: "arn:aws:iam::123456789012:role/MySchedulerRole"
-    # (This IAM role must have permission to invoke your Lambda: lambda:InvokeFunction)
+Description: EventBridge schedule to run Lambda (DAYALAMBDA) every 3 minutes
 
 Resources:
   LambdaSchedule:
     Type: AWS::Scheduler::Schedule
     Properties:
-      Name: LambdaEvery3Minutes   # 👉 You can change this schedule name if needed
+      Name: LambdaEvery3Minutes   # You can change this name if needed
       FlexibleTimeWindow:
-        Mode: OFF  # Run exactly on schedule without flexible delays
-      ScheduleExpression: rate(3 minutes)   # 👉 Runs every 3 minutes
+        Mode: OFF  # Run exactly on schedule without delays
+      ScheduleExpression: rate(3 minutes)   # Runs every 3 minutes
       Target:
-        Arn: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${LambdaFunctionName}
-        # 👉 EventBridge Scheduler will call this Lambda function
-        RoleArn: !Ref ScheduleRoleArn
-        # 👉 EventBridge uses this role to invoke your Lambda
+        Arn: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/DAYALAMBDA
+        # 👉 Hardcoded Lambda function name
+        RoleArn: azzzzzzzz
+        # 👉 Hardcoded IAM role ARN
+
+  # Optional: Attach policy to ensure the provided Role can invoke the Lambda
+  SchedulerInvokeLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AllowSchedulerInvokeDAYALAMBDA
+      Roles:
+        - !Select [1, !Split ["/", "azzzzzzzz"]]  
+        # 👉 Extracts the RoleName from ARN automatically
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: lambda:InvokeFunction
+            Resource: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/DAYALAMBDA
 
 Outputs:
   ScheduleName:
     Description: Name of the EventBridge schedule
     Value: !Ref LambdaSchedule
+  LambdaFunctionArn:
+    Description: ARN of the Lambda being triggered
+    Value: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/DAYALAMBDA
