@@ -1,0 +1,11 @@
+{
+  "errorMessage": "An error occurred (AuthorizationError) when calling the Publish operation: User: arn:aws:sts::833376745199:assumed-role/jira-notify-lambda-JiraNotificationLambdaRole-J7lqx9ZGOlg1/acr_jira_token_expiry is not authorized to perform: SNS:Publish on resource: arn:aws:sns:us-east-1:833376745199:acr-jira-token-expiry-test because no identity-based policy allows the SNS:Publish action",
+  "errorType": "AuthorizationErrorException",
+  "requestId": "7aa3bd7f-d320-44b5-8da2-ec8e2a3b3e7d",
+  "stackTrace": [
+    "  File \"/var/task/lambda_function.py\", line 25, in lambda_handler\n    sns_client.publish(\n",
+    "  File \"/var/lang/lib/python3.13/site-packages/botocore/client.py\", line 598, in _api_call\n    return self._make_api_call(operation_name, kwargs)\n",
+    "  File \"/var/lang/lib/python3.13/site-packages/botocore/context.py\", line 123, in wrapper\n    return func(*args, **kwargs)\n",
+    "  File \"/var/lang/lib/python3.13/site-packages/botocore/client.py\", line 1061, in _make_api_call\n    raise error_class(parsed_response, operation_name)\n"
+  ]
+}
