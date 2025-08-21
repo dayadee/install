@@ -1,1 +1,35 @@
 
+AWSTemplateFormatVersion: "2010-09-09"
+Description: EventBridge schedule to run Lambda every 3 minutes
+
+Parameters:
+  LambdaFunctionName:
+    Type: String
+    Description: Name of the existing Lambda function to trigger
+    # 👉 Example: "MyETLLambda" 
+    # (This must be the actual name of your Lambda function, NOT the ARN)
+
+  ScheduleRoleArn:
+    Type: String
+    Description: ARN of the existing IAM role that EventBridge Scheduler will assume
+    # 👉 Example: "arn:aws:iam::123456789012:role/MySchedulerRole"
+    # (This IAM role must have permission to invoke your Lambda: lambda:InvokeFunction)
+
+Resources:
+  LambdaSchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: LambdaEvery3Minutes   # 👉 You can change this schedule name if needed
+      FlexibleTimeWindow:
+        Mode: OFF  # Run exactly on schedule without flexible delays
+      ScheduleExpression: rate(3 minutes)   # 👉 Runs every 3 minutes
+      Target:
+        Arn: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${LambdaFunctionName}
+        # 👉 EventBridge Scheduler will call this Lambda function
+        RoleArn: !Ref ScheduleRoleArn
+        # 👉 EventBridge uses this role to invoke your Lambda
+
+Outputs:
+  ScheduleName:
+    Description: Name of the EventBridge schedule
+    Value: !Ref LambdaSchedule
