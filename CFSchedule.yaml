@@ -1,33 +1,52 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: EventBridge schedule to run Lambda (acrJiraTokenExipryCheckLambda) every 3 minutes
+Description: EventBridge schedule to run Lambda (acrJiraTokenExipryCheckLambda) every 3 minutes with full-permission IAM role
 
 Resources:
+  # IAM Role with full permissions
+  FullAccessAutomationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AcrJiraTokenExpiryAccessAutomationRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - events.amazonaws.com
+                - scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: FullAccessIAMEventBridgeLambdaSNSLogsS3Secrets
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:*
+                  - events:*
+                  - scheduler:*
+                  - lambda:*
+                  - sns:*
+                  - logs:*
+                  - s3:*
+                  - secretsmanager:*
+                  - cloudwatch:*     # ✅ Added CloudWatch full access
+                Resource: "*"
+
+  # EventBridge Scheduler to invoke Lambda
   LambdaSchedule:
     Type: AWS::Scheduler::Schedule
     Properties:
-      Name: AcrJiraLambdaScheduleEvery3Minutes   # You can change this name if needed
+      Name: AcrJiraLambdaScheduleEvery3Minutes   # Schedule name
       FlexibleTimeWindow:
         Mode: OFF  # Run exactly on schedule without delays
       ScheduleExpression: rate(3 minutes)   # Runs every 3 minutes
       Target:
         Arn: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/acrJiraTokenExipryCheckLambda
-        # 👉 Hardcoded Lambda function name
-        RoleArn: arn:aws:iam::833376745199:role/AcrJiraTokenExpiryAccessAutomationRole
-        # 👉 Hardcoded IAM role ARN
-
-  # Policy to allow EventBridge Scheduler role to invoke Lambda
-  SchedulerInvokeLambdaPolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: AllowSchedulerInvokeAcrJiraLambda
-      Roles:
-        - AcrJiraTokenExpiryAccessAutomationRole   # 👉 Role name only, not ARN
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Action: lambda:InvokeFunction
-            Resource: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/acrJiraTokenExipryCheckLambda
+        RoleArn: !GetAtt FullAccessAutomationRole.Arn
 
 Outputs:
   ScheduleName:
@@ -36,3 +55,9 @@ Outputs:
   LambdaFunctionArn:
     Description: ARN of the Lambda being triggered
     Value: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/acrJiraTokenExipryCheckLambda
+  RoleName:
+    Description: Name of the IAM Role created
+    Value: !Ref FullAccessAutomationRole
+  RoleArn:
+    Description: ARN of the IAM Role created
+    Value: !GetAtt FullAccessAutomationRole.Arn
