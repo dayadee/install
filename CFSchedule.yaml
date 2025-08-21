@@ -1,18 +1,18 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: EventBridge schedule to run Lambda (DAYALAMBDA) every 3 minutes
+Description: EventBridge schedule to run Lambda (acrJiraTokenExipryCheckLambda) every 3 minutes
 
 Resources:
   LambdaSchedule:
     Type: AWS::Scheduler::Schedule
     Properties:
-      Name: LambdaEvery3Minutes   # You can change this name if needed
+      Name: AcrJiraLambdaScheduleEvery3Minutes   # You can change this name if needed
       FlexibleTimeWindow:
         Mode: OFF  # Run exactly on schedule without delays
       ScheduleExpression: rate(3 minutes)   # Runs every 3 minutes
       Target:
-        Arn: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/DAYALAMBDA
+        Arn: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/acrJiraTokenExipryCheckLambda
         # 👉 Hardcoded Lambda function name
-        RoleArn: azzzzzzzz
+        RoleArn: arn:aws:iam::833376745199:role/AcrJiraTokenExpiryAccessAutomationRole
         # 👉 Hardcoded IAM role ARN
 
   # Optional: Attach policy to ensure the provided Role can invoke the Lambda
@@ -21,14 +21,14 @@ Resources:
     Properties:
       PolicyName: AllowSchedulerInvokeDAYALAMBDA
       Roles:
-        - !Select [1, !Split ["/", "azzzzzzzz"]]  
+        - !Select [1, !Split ["/", "arn:aws:iam::833376745199:role/AcrJiraTokenExpiryAccessAutomationRole"]]  
         # 👉 Extracts the RoleName from ARN automatically
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Action: lambda:InvokeFunction
-            Resource: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/DAYALAMBDA
+            Resource: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/acrJiraTokenExipryCheckLambda
 
 Outputs:
   ScheduleName:
@@ -36,4 +36,4 @@ Outputs:
     Value: !Ref LambdaSchedule
   LambdaFunctionArn:
     Description: ARN of the Lambda being triggered
-    Value: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/DAYALAMBDA
+    Value: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/acrJiraTokenExipryCheckLambda
