@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Lambda with EventBridge rule (inline code) to notify Jira token expiry using existing IAM role
+
+Parameters:
+  ExistingLambdaRoleArn:
+    Type: String
+    Description: ARN of your existing IAM role with full permissions
+    # Example: arn:aws:iam::123456789012:role/FullAccessLambdaRole
+
+Resources:
+  # Lambda Function using existing IAM role
+  AcrJiraTokenExpiryCheckLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: AcrJiraTokenExpiryCheckLambda
+      Runtime: python3.9
+      Role: !Ref ExistingLambdaRoleArn
+      Handler: index.lambda_handler
+      Timeout: 60
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+          from datetime import datetime, timezone
+
+          secrets_client = boto3.client("secretsmanager")
+          sns_client = boto3.client("sns")
+          SECRET_NAME = "acr/test/dummy"
+          SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:833376745199:acr-jira-token-expiry-test"
+
+          def lambda_handler(event, context):
+              secret_value = secrets_client.get_secret_value(SecretId=SECRET_NAME)
+              secret = json.loads(secret_value["SecretString"])
+              token = secret["token"]
+              expiry_date = datetime.fromisoformat(secret["expiryDate"].replace("Z", "+00:00"))
+              days_left = (expiry_date - datetime.now(timezone.utc)).days
+
+              if days_left <= 15:
+                  message = (
+                      f"Hello Team, \n"
+                      f"Jira API token in `{SECRET_NAME}` is expiring in {days_left} days. "
+                      f"Kindly rotate token before its expiry in AWS Secret Manager.\n"
+                      f"(expiry: {expiry_date.date()})\n"
+                      f"Token (masked): {token[:4]}****\n"
+                      f"AWS Secret location: https://us-east-1.console.aws.amazon.com/secretsmanager/secret?name=jira%2Fapi%2Ftoken&region=us-east-1\n"
+                      f"Thank you\n"
+                      f"ACR SRE TEAM\n"
+                  )
+                  sns_client.publish(
+                      TopicArn=SNS_TOPIC_ARN,
+                      Subject="Jira API Token Expiry Alert",
+                      Message=message
+                  )
+
+  # EventBridge Rule to trigger Lambda daily at 9 AM IST
+  LambdaScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: AcrJiraLambdaRuleDaily9amIST
+      ScheduleExpression: cron(30 3 * * ? *)   # 9 AM IST = 03:30 UTC
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt AcrJiraTokenExpiryCheckLambda.Arn
+          Id: "TargetLambda"
+
+  # Permission for EventBridge to invoke Lambda
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AcrJiraTokenExpiryCheckLambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt LambdaScheduleRule.Arn
+
+Outputs:
+  LambdaFunctionName:
+    Description: Name of the Lambda function
+    Value: !Ref AcrJiraTokenExpiryCheckLambda
+  LambdaFunctionArn:
+    Description: ARN of the Lambda function
+    Value: !GetAtt AcrJiraTokenExpiryCheckLambda.Arn
+  RuleName:
+    Description: Name of the EventBridge rule
+    Value: !Ref LambdaScheduleRule
