@@ -14,7 +14,7 @@ Parameters:
   ExistingLambdaRoleArn:
     Type: String
     Description: ARN of your existing IAM role with Lambda + SecretsManager + SNS permissions
-    Default: arn:aws:iam::<YOUR_ACCOUNT_ID>:role/<YOUR_EXISTING_ROLE_NAME>   # <-- Replace
+    Default: arn:aws:iam::833376745199:role/AcrJiraTokenExpiryAccessAutomationRole   # <-- Replace
 
 Resources:
   # SNS Topic for alerts
