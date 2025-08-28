@@ -1,13 +1,43 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Lambda with EventBridge rule (inline code) to notify Jira token expiry using existing IAM role daily 9 AM IST, sends alert even on errors
+Description: >
+  Lambda with EventBridge rule to notify Jira token expiry using existing IAM role daily 9 AM IST,
+  sends alert even on errors with SNS email notifications.
+  ----------------------------------------------------------------------
+  ✅ Required Secret in Secrets Manager (example JSON format):
+  {
+    "token": "your-jira-api-token",
+    "expiryDate": "2025-09-30T00:00:00Z"
+  }
+  ----------------------------------------------------------------------
 
 Parameters:
   ExistingLambdaRoleArn:
     Type: String
-    Description: ARN of your existing IAM role with full permissions
-    Default: arn:aws:iam::833376745199:role/AcrJiraTokenExpiryAccessAutomationRole   # placeholder for input
+    Description: ARN of your existing IAM role with Lambda + SecretsManager + SNS permissions
+    Default: arn:aws:iam::<YOUR_ACCOUNT_ID>:role/<YOUR_EXISTING_ROLE_NAME>   # <-- Replace
 
 Resources:
+  # SNS Topic for alerts
+  JiraTokenExpirySNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: JiraTokenExpiryAlerts
+
+  # SNS Subscriptions (multiple emails)
+  JiraTokenExpirySNSSubscription1:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref JiraTokenExpirySNSTopic
+      Protocol: email
+      Endpoint: daya.8@partner.samsung.com
+
+  JiraTokenExpirySNSSubscription2:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref JiraTokenExpirySNSTopic
+      Protocol: email
+      Endpoint: v.8@partner.samsung.com
+
   # Lambda Function using existing IAM role
   AcrJiraTokenExpiryCheckLambda:
     Type: AWS::Lambda::Function
@@ -17,18 +47,22 @@ Resources:
       Role: !Ref ExistingLambdaRoleArn
       Handler: index.lambda_handler
       Timeout: 600
+      Environment:
+        Variables:
+          SECRET_NAME: "jira/api/token"   # <-- Replace if your secret name is different
+          SNS_TOPIC_ARN: !Ref JiraTokenExpirySNSTopic
       Code:
         ZipFile: |
           import boto3
           import json
-          import traceback
           from datetime import datetime, timezone
+          import os
 
           secrets_client = boto3.client("secretsmanager")
           sns_client = boto3.client("sns")
           
-          SECRET_NAME = "jira/api/token"  # <--- REPLACE HERE with your secret name
-          SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:833376745199:Jira-token-expiry-AWS-Secret-Manager"  # <--- REPLACE HERE with your SNS topic ARN
+          SECRET_NAME = os.environ["SECRET_NAME"]
+          SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
 
           def lambda_handler(event, context):
               try:
@@ -64,11 +98,9 @@ Resources:
                       )
 
               except Exception as e:
-                  # Send alert for any exception
                   error_message = (
                       f"ERROR in JIRA TOKEN in AWS SECRET MANAGER \n\n"
-
-                      f"Please do Check JIRA TOKEN in AWS SECRET MANAGER and LambdaFunction as well \n\n"
+                      f"Please check JIRA TOKEN in AWS SECRET MANAGER and Lambda function.\n\n"
                       f"Error: {str(e)}\n"
                   )
                   try:
@@ -79,15 +111,13 @@ Resources:
                       )
                   except Exception as sns_err:
                       print("Failed to send SNS error alert:", sns_err)
-                  # Optional: re-raise if you want Lambda to mark execution as failed
-                  # raise e
 
   # EventBridge Rule to trigger Lambda daily at 9 AM IST
   LambdaScheduleRule:
     Type: AWS::Events::Rule
     Properties:
       Name: AcrJiraLambdaRuleDaily9amIST
-      ScheduleExpression: cron(30 3 * * ? *) # <--- Runs every day 9 AM 
+      ScheduleExpression: cron(30 3 * * ? *) # Runs every day 9 AM IST (03:30 UTC)
       State: ENABLED
       Targets:
         - Arn: !GetAtt AcrJiraTokenExpiryCheckLambda.Arn
@@ -112,3 +142,9 @@ Outputs:
   RuleName:
     Description: Name of the EventBridge rule
     Value: !Ref LambdaScheduleRule
+  SNSTopicArn:
+    Description: ARN of the SNS topic
+    Value: !Ref JiraTokenExpirySNSTopic
+  SubscriptionEmails:
+    Description: Emails subscribed for alerts
+    Value: "daya.8@partner.samsung.com, v.8@partner.samsung.com"
