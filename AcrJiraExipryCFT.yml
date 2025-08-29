@@ -36,7 +36,14 @@ Resources:
     Properties:
       TopicArn: !Ref JiraTokenExpirySNSTopic
       Protocol: email
-      Endpoint: v.8@partner.samsung.com
+      Endpoint: rakshith.r@samsung.com
+
+  JiraTokenExpirySNSSubscription3:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref JiraTokenExpirySNSTopic
+      Protocol: email
+      Endpoint: adsblr.ri@samsung.com   
 
   # Lambda Function using existing IAM role
   AcrJiraTokenExpiryCheckLambda:
@@ -85,9 +92,9 @@ Resources:
                           f"Hello Team, \n"
                           f"Jira API token in `{SECRET_NAME}` is expiring in {days_left} days. "
                           f"Kindly rotate token before its expiry in AWS Secret Manager.\n"
-                          f"**(expiry: {expiry_date.date()})**\n"
+                          f"(expiry: {expiry_date.date()})\n"
                           f"Token (masked): {token[:4]}****\n"
-                          f"AWS Secret location: https://us-east-1.console.aws.amazon.com/secretsmanager/secret?name=jira%2Fapi%2Ftoken&region=us-east-1\n"
+                          f"AWS Secret location: https://us-east-1.console.aws.amazon.com/secretsmanager/secret?name=jira%2Fapi%2Ftoken&region=us-east-1\n\n\n"
                           f"Thank you\n"
                           f"ACR SRE TEAM\n"
                       )
@@ -117,7 +124,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Name: AcrJiraLambdaRuleDaily9amIST
-      ScheduleExpression: cron(30 3 * * ? *) # Runs every day 9 AM IST (03:30 UTC)
+      ScheduleExpression: cron(30 3 * * ? *) #  Runs every day 9 AM IST (03:30 UTC)
       State: ENABLED
       Targets:
         - Arn: !GetAtt AcrJiraTokenExpiryCheckLambda.Arn
@@ -147,4 +154,4 @@ Outputs:
     Value: !Ref JiraTokenExpirySNSTopic
   SubscriptionEmails:
     Description: Emails subscribed for alerts
-    Value: "daya.8@partner.samsung.com, v.8@partner.samsung.com"
+    Value: "daya.8@partner.samsung.com, adsblr.ri@samsung.com, rakshith.r@samsung.com"
