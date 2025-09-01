@@ -1,4 +1,4 @@
-❯ kubectl apply -f cwtest.yaml
+kubectl apply -f cwtest.yaml
 namespace/cwtest unchanged
 deployment.apps/cpu-demo unchanged
 horizontalpodautoscaler.autoscaling/cpu-demo-hpa unchanged
