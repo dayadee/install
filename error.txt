@@ -1,1 +1,5 @@
-Resource handler returned message: "Access denied for operation 'User: arn:aws:sts::833376745199:assumed-role/PRD-CFN-Role/AWSCloudFormation is not authorized to perform: scheduler:GetSchedule on resource: arn:aws:scheduler:us-east-1:833376745199:schedule/default/AcrJiraLambdaScheduleEvery3Minutes because no identity-based policy allows the scheduler:GetSchedule action (Service: Scheduler, Status Code: 403, Request ID: e152e39a-7c6f-49f2-ae7a-64e2b3644588) (SDK Attempt Count: 1)'." (RequestToken: 1447c23d-66d9-4e88-6001-7aff1dead33b, HandlerErrorCode: AccessDenied)
+❯ kubectl apply -f cwtest.yaml
+namespace/cwtest unchanged
+deployment.apps/cpu-demo unchanged
+horizontalpodautoscaler.autoscaling/cpu-demo-hpa unchanged
+Error from server (InternalError): error when creating "cwtest.yaml": Internal error occurred: failed calling webhook "mservice.elbv2.k8s.aws": failed to call webhook: Post "https://aws-load-balancer-webhook-service.kube-system.svc:443/mutate-v1-service?timeout=10s": context deadline exceeded
