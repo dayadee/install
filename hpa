@@ -34,8 +34,13 @@ kind: Service
 metadata:
   name: cpu-demo
   namespace: cwtest
+  labels:
+    app: cpu-demo
+  annotations:
+    # 👇 Ensures AWS Load Balancer Controller webhook ignores this service
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internal-disabled"
 spec:
-  type: ClusterIP
+  type: ClusterIP   # 🚫 Not LoadBalancer → stays inside cluster
   selector:
     app: cpu-demo
   ports:
