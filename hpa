@@ -20,32 +20,13 @@ spec:
     spec:
       containers:
       - name: cpu-demo
-        image: k8s.gcr.io/hpa-example
-        ports:
-        - containerPort: 80
+        image: progrium/stress   # lightweight CPU stress image
+        args: ["--cpu", "1"]     # burns 1 CPU core continuously
         resources:
           requests:
             cpu: 100m
           limits:
             cpu: 200m
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: cpu-demo
-  namespace: cwtest
-  labels:
-    app: cpu-demo
-  annotations:
-    # 👇 Ensures AWS Load Balancer Controller webhook ignores this service
-    service.beta.kubernetes.io/aws-load-balancer-scheme: "internal-disabled"
-spec:
-  type: ClusterIP   # 🚫 Not LoadBalancer → stays inside cluster
-  selector:
-    app: cpu-demo
-  ports:
-  - port: 80
-    targetPort: 80
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
