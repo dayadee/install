@@ -8,3 +8,12 @@ Waiting for daemon set "cloudwatch-agent" rollout to finish: 0 of 3 updated pods
 
 kubectl logs cloudwatch-agent-9k97h -n amazon-cloudwatch
 Error from server: Get "https://172.17.23.177:10250/containerLogs/amazon-cloudwatch/cloudwatch-agent-9k97h/cloudwatch-agent": dial tcp 172.17.23.177:10250: i/o timeout
+
+
+ kubectl apply -f cwagentconfig-backup.yaml
+Error from server (Conflict): error when applying patch:
+{"data":{"cwagentconfig.json":"{\n  \"logs\": {\n    \"metrics_collected\": {\n      \"kubernetes\": {\n        \"cluster_name\": \"STG-EKS-ACRLI\",\n        \"metrics_collection_interval\": 60\n      }\n    },\n    \"force_flush_interval\": 5\n  }\n}\n"},"metadata":{"annotations":{"kubectl.kubernetes.io/last-applied-configuration":"{\"apiVersion\":\"v1\",\"data\":{\"cwagentconfig.json\":\"{\\n  \\\"logs\\\": {\\n    \\\"metrics_collected\\\": {\\n      \\\"kubernetes\\\": {\\n        \\\"cluster_name\\\": \\\"STG-EKS-ACRLI\\\",\\n        \\\"metrics_collection_interval\\\": 60\\n      }\\n    },\\n    \\\"force_flush_interval\\\": 5\\n  }\\n}\\n\"},\"kind\":\"ConfigMap\",\"metadata\":{\"annotations\":{},\"creationTimestamp\":\"2023-08-15T02:10:45Z\",\"name\":\"cwagentconfig\",\"namespace\":\"amazon-cloudwatch\",\"resourceVersion\":\"289439238\",\"uid\":\"674690d3-f17b-4286-b786-e3441b89e90d\"}}\n"},"resourceVersion":"289439238"}}
+to:
+Resource: "/v1, Resource=configmaps", GroupVersionKind: "/v1, Kind=ConfigMap"
+Name: "cwagentconfig", Namespace: "amazon-cloudwatch"
+for: "cwagentconfig-backup.yaml": error when patching "cwagentconfig-backup.yaml": Operation cannot be fulfilled on configmaps "cwagentconfig": the object has been modified; please apply your changes to the latest version and try again
