@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cwagentconfig
+  namespace: amazon-cloudwatch
+data:
+  cwagentconfig.json: |
+    {
+      "metrics_collected": {
+        "kubernetes": {
+          "cluster_name": "STG-EKS-ACRLI",
+          "metrics_collection_interval": 60
+        },
+        "container": {
+          "metrics_collection_interval": 60,
+          "namespace": ["acrli-daya-test"],
+          "container_names": ["acr-li-b-test"]
+        }
+      },
+      "logs": {
+        "force_flush_interval": 5
+      }
+    }
